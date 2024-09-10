@@ -19,11 +19,10 @@ class road:
         self.length = length # m
         self.max_speed = max_speed #km/h
         self.n_lanes = n_lanes 
-        self.freeflow_time = length/max_speed * 60/1000
+        self.freeflow_time = length/max_speed * 60/1000    #conversion factor so result is in minutes
         self.travel_time = self.freeflow_time
         self.cars_on_road = 0
         self.capacity = int(n_lanes*length/(car_length+d_spacing))
-        #conversion factor so result is in minutes
 class car:
     def __init__(self,position):
         self.position = position
