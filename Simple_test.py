@@ -6,7 +6,7 @@ endnodes = [1,2,3,3,4,6,5,6,6]
 lengths = [3e4,5e4,4e4,6e4,2e4,2e4,3e4,1e4,5e3]
 speeds =[100,100,100,100,100,100,100,100,100]
 lanes = [2,2,2,2,2,1,2,2,2]
-capacity_multiplier = [1,1,1,1,1,1,1,1,1]
+capacity_multipliers = [1,1,1,1,1,1,1,1,1]
 cars = []
 roads = []
 car_length = 4.5
@@ -16,7 +16,7 @@ alpha = 0.15
 beta = 4
 cutoff_time = 120
 class road:
-    def __init__(self,startnode, endnode,length,max_speed,n_lanes):
+    def __init__(self,startnode, endnode,length,max_speed,n_lanes,capacity_multiplier):
         self.startnode = startnode
         self.endnode = endnode
         self.length = length # m
@@ -25,7 +25,7 @@ class road:
         self.freeflow_time = length/max_speed * 60/1000 #conversion factor so result is in minutes
         self.travel_time = self.freeflow_time
         self.cars_on_road = 0
-        self.capacity = int(n_lanes*length/(car_length+d_spacing))
+        self.capacity = int(n_lanes*length/(car_length+d_spacing)*capacity_multiplier)
         self.total_cars = 0
 
 class car:
@@ -37,7 +37,7 @@ class car:
         self.total_time = 0
         self.roads_taken = []
 for i in range(9):
-    roads.append(road(startnodes[i],endnodes[i],lengths[i],speeds[i],lanes[i]))
+    roads.append(road(startnodes[i],endnodes[i],lengths[i],speeds[i],lanes[i],capacity_multipliers[i]))
 
         
 #Timestep loop:
