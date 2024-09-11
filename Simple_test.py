@@ -1,10 +1,12 @@
 import numpy as np
+import matplotlib.pyplot as plt
 nodes = [[0,1],[2],[3],[4,5,6],[7],[8],[]]
 startnodes = [0,0,1,2,3,3,3,4,5]
 endnodes = [1,2,3,3,4,6,5,6,6]
-lengths = [3e4,5e4,4e4,6e4,2e4,3e4,2e4,1e4,5e3]
+lengths = [3e4,5e4,4e4,6e4,2e4,2e4,3e4,1e4,5e3]
 speeds =[100,100,100,100,100,100,100,100,100]
 lanes = [2,2,2,2,2,2,1,2,2]
+capacity_multiplier = [1,1,1,1,1,1,1,1,1]
 cars = []
 roads = []
 car_length = 4.5
@@ -17,12 +19,14 @@ class road:
         self.startnode = startnode
         self.endnode = endnode
         self.length = length # m
-        self.max_speed = max_speed #km/h
+        self.max_speed = max_speed # km/h
         self.n_lanes = n_lanes 
-        self.freeflow_time = length/max_speed * 60/1000    #conversion factor so result is in minutes
+        self.freeflow_time = length/max_speed * 60/1000 #conversion factor so result is in minutes
         self.travel_time = self.freeflow_time
         self.cars_on_road = 0
         self.capacity = int(n_lanes*length/(car_length+d_spacing))
+        self.total_cars = 0
+
 class car:
     def __init__(self,position):
         self.position = position
@@ -30,14 +34,14 @@ class car:
         self.time_on_road = 0
         self.time_to_reach_node = 0
         self.total_time = 0
-
+        self.roads_taken = []
 for i in range(9):
     roads.append(road(startnodes[i],endnodes[i],lengths[i],speeds[i],lanes[i]))
 
         
 #Timestep loop:
 
-while t<240:
+while t<480:
     t+=1
     print(t)
     numcars = int(np.random.normal(95,1))
@@ -45,6 +49,7 @@ while t<240:
         cars.append(car(0))
     for rd in roads:
         rd.travel_time = rd.freeflow_time*(1+alpha*pow(rd.cars_on_road/rd.capacity,beta))
+        rd.total_cars += rd.cars_on_road
     for vehicle in cars:
         if vehicle.finished:
             continue
@@ -86,7 +91,19 @@ while t<240:
                 vehicle.position.cars_on_road -=1
                 vehicle.position = vehicle.position.endnode
                 vehicle.time_on_road = 0
+                vehicle.roads_taken.append(vehicle.position)
 
 finished = []
+travel_time = []
+paths = []
 for cr in cars:
     finished.append(cr.finished)
+    travel_time.append([cr.total_time,cr.finished])
+    paths.append([cr.roads_taken,cr.total_time])
+avg_times = []
+for i in range(len(cars)):
+    avg_times.append(cars[i].total_time)
+plt.plot(avg_times)
+
+for rd in roads:
+    print(rd.total_cars/(rd.capacity*t))
