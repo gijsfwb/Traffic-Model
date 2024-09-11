@@ -5,7 +5,7 @@ startnodes = [0,0,1,2,3,3,3,4,5]
 endnodes = [1,2,3,3,4,6,5,6,6]
 lengths = [3e4,5e4,4e4,6e4,2e4,2e4,3e4,1e4,5e3]
 speeds =[100,100,100,100,100,100,100,100,100]
-lanes = [2,2,2,2,2,2,1,2,2]
+lanes = [2,2,2,2,2,1,2,2,2]
 capacity_multiplier = [1,1,1,1,1,1,1,1,1]
 cars = []
 roads = []
@@ -14,6 +14,7 @@ d_spacing = 55
 t = 0
 alpha = 0.15
 beta = 4
+cutoff_time = 120
 class road:
     def __init__(self,startnode, endnode,length,max_speed,n_lanes):
         self.startnode = startnode
@@ -40,7 +41,7 @@ for i in range(9):
 
         
 #Timestep loop:
-
+cars.append(car(0))
 while t<480:
     t+=1
     print(t)
@@ -49,7 +50,8 @@ while t<480:
         cars.append(car(0))
     for rd in roads:
         rd.travel_time = rd.freeflow_time*(1+alpha*pow(rd.cars_on_road/rd.capacity,beta))
-        rd.total_cars += rd.cars_on_road
+        if t>cutoff_time:
+            rd.total_cars += rd.cars_on_road
     for vehicle in cars:
         if vehicle.finished:
             continue
@@ -67,7 +69,7 @@ while t<480:
             attractiveness = []            
             for index in nodes[vehicle.position]:
                 if roads[index].cars_on_road < roads[index].capacity:
-                    attractiveness.append(roads[index].travel_time)
+                    attractiveness.append(1/roads[index].travel_time)
                 else:
                     attractiveness.append(0)
             normalize_attractiveness = sum(attractiveness)
@@ -77,6 +79,7 @@ while t<480:
                     if attractiveness != 0:
                         p_choice.append(attractiveness[i]/normalize_attractiveness)
                 choice_val = np.random.random()
+#                print(p_choice)
                 for i in range(len(p_choice)):
                     if choice_val < sum(p_choice[0:i+1]):
                         vehicle.position = roads[nodes[vehicle.position][i]]
@@ -100,10 +103,10 @@ for cr in cars:
     finished.append(cr.finished)
     travel_time.append([cr.total_time,cr.finished])
     paths.append([cr.roads_taken,cr.total_time])
-avg_times = []
-for i in range(len(cars)):
-    avg_times.append(cars[i].total_time)
-plt.plot(avg_times)
+# avg_times = []
+# for i in range(len(cars)):
+#     avg_times.append(cars[i].total_time)
+# plt.plot(avg_times)
 
 for rd in roads:
-    print(rd.total_cars/(rd.capacity*t))
+    print(f"road from {rd.startnode} to {rd.endnode} had average occupancy: {rd.total_cars/(rd.capacity*(t-cutoff_time))}")
