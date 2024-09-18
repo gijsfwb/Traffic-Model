@@ -41,8 +41,7 @@ for i in range(9):
 
 
 #Timestep loop:
-cars.append(car(0))
-while t<240:
+while t<480:
     t+=1
     print(t)
     numcars = int(np.random.normal(95,1))
@@ -55,7 +54,7 @@ while t<240:
     for vehicle in cars:
         if vehicle.finished:
             continue
-        vehicle.total_time +=1
+        vehicle.total_time += 1
         #if current position is a node, change it to road if capacity allows
         if isinstance(vehicle.position,int):
             if vehicle.position == 6:
@@ -76,14 +75,13 @@ while t<240:
             p_choice = []
             if normalize_attractiveness != 0:
                 for i in range(len(attractiveness)):
-                    if attractiveness != 0:
-                        p_choice.append(attractiveness[i]/normalize_attractiveness)
+                     p_choice.append(attractiveness[i]/normalize_attractiveness)
                 choice_val = np.random.random()
 #                print(p_choice)
                 for i in range(len(p_choice)):
                     if choice_val < sum(p_choice[0:i+1]):
                         vehicle.position = roads[nodes[vehicle.position][i]]
-                        vehicle.position.cars_on_road +=1
+                        vehicle.position.cars_on_road += 1
                         vehicle.time_to_reach_node = vehicle.position.travel_time + np.random.normal(0,2)
                         break
 
@@ -104,7 +102,7 @@ for cr in cars:
     travel_time.append([cr.total_time,cr.finished])
     paths.append([cr.roads_taken,cr.total_time])
 avg_times = []
-binsize = 1
+binsize = 1000
 for i in range(int(len(cars)/binsize)):
     total_bin = 0
     if sum(finished[i*binsize:(i+1)*binsize]) == binsize:
@@ -114,8 +112,8 @@ for i in range(int(len(cars)/binsize)):
         avg_times.append(avg_bin)
 
 
-#plt.plot(avg_times)
-plt.hist(avg_times,bins=int(max(avg_times)-min(avg_times)),range=(min(avg_times),max(avg_times)))
+plt.plot(avg_times)
+#plt.hist(avg_times,bins=int(max(avg_times)-min(avg_times)),range=(min(avg_times),max(avg_times)))
 
 for rd in roads:
     print(f"road from {rd.startnode} to {rd.endnode} had average occupancy: {rd.total_cars/(rd.capacity*(t-cutoff_time))}")
