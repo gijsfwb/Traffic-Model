@@ -39,10 +39,10 @@ class car:
 for i in range(9):
     roads.append(road(startnodes[i],endnodes[i],lengths[i],speeds[i],lanes[i],capacity_multipliers[i]))
 
-        
+
 #Timestep loop:
 cars.append(car(0))
-while t<480:
+while t<240:
     t+=1
     print(t)
     numcars = int(np.random.normal(95,1))
@@ -103,10 +103,19 @@ for cr in cars:
     finished.append(cr.finished)
     travel_time.append([cr.total_time,cr.finished])
     paths.append([cr.roads_taken,cr.total_time])
-# avg_times = []
-# for i in range(len(cars)):
-#     avg_times.append(cars[i].total_time)
-# plt.plot(avg_times)
+avg_times = []
+binsize = 1
+for i in range(int(len(cars)/binsize)):
+    total_bin = 0
+    if sum(finished[i*binsize:(i+1)*binsize]) == binsize:
+        for j in range(i*binsize,(i+1)*binsize):            
+            total_bin += cars[j].total_time
+            avg_bin = total_bin/binsize
+        avg_times.append(avg_bin)
+
+
+#plt.plot(avg_times)
+plt.hist(avg_times,bins=int(max(avg_times)-min(avg_times)),range=(min(avg_times),max(avg_times)))
 
 for rd in roads:
     print(f"road from {rd.startnode} to {rd.endnode} had average occupancy: {rd.total_cars/(rd.capacity*(t-cutoff_time))}")
