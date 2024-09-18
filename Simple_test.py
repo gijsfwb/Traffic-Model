@@ -27,7 +27,7 @@ class road:
         self.cars_on_road = 0
         self.capacity = int(n_lanes*length/(car_length+d_spacing)*capacity_multiplier)
         self.total_cars = 0
-
+        self.occupancy = []
 class car:
     def __init__(self,position):
         self.position = position
@@ -49,50 +49,66 @@ while t<480:
         cars.append(car(0))
     for rd in roads:
         rd.travel_time = rd.freeflow_time*(1+alpha*pow(rd.cars_on_road/rd.capacity,beta))
+        rd.occupancy.append(rd.cars_on_road/rd.capacity)
         if t>cutoff_time:
             rd.total_cars += rd.cars_on_road
     for vehicle in cars:
         if vehicle.finished:
             continue
-        vehicle.total_time += 1
-        #if current position is a node, change it to road if capacity allows
-        if isinstance(vehicle.position,int):
-            if vehicle.position == 6:
-                vehicle.finished = True
-                continue
-#               OLD CODE WITHOUT PATH CHOOSING           
-#               if roads[nodes[vehicle.position][0]].cars_on_road < roads[nodes[vehicle.position][0]].capacity:
-#               vehicle.position = roads[nodes[vehicle.position][0]]
-#               vehicle.position.cars_on_road +=1
-#               vehicle.time_to_reach_node = vehicle.position.travel_time + np.random.normal(0,2)
-            attractiveness = []            
-            for index in nodes[vehicle.position]:
-                if roads[index].cars_on_road < roads[index].capacity:
-                    attractiveness.append(1/roads[index].travel_time)
-                else:
-                    attractiveness.append(0)
-            normalize_attractiveness = sum(attractiveness)
-            p_choice = []
-            if normalize_attractiveness != 0:
-                for i in range(len(attractiveness)):
-                     p_choice.append(attractiveness[i]/normalize_attractiveness)
-                choice_val = np.random.random()
-#                print(p_choice)
-                for i in range(len(p_choice)):
-                    if choice_val < sum(p_choice[0:i+1]):
-                        vehicle.position = roads[nodes[vehicle.position][i]]
-                        vehicle.position.cars_on_road += 1
-                        vehicle.time_to_reach_node = vehicle.position.travel_time + np.random.normal(0,2)
-                        break
-
-        #if current position is a road, see whether the car reached the next node
         else:
+            vehicle.total_time += 1
             vehicle.time_on_road += 1
-            if vehicle.time_on_road >= vehicle.time_to_reach_node:
-                vehicle.position.cars_on_road -=1
-                vehicle.position = vehicle.position.endnode
-                vehicle.time_on_road = 0
-                vehicle.roads_taken.append(vehicle.position)
+            #move the vehicle from city A to a road (if possible)
+            if vehicle.position == 0: 
+                attractiveness = []            
+                for index in nodes[vehicle.position]:
+                    if roads[index].cars_on_road < roads[index].capacity:
+                        attractiveness.append(1/roads[index].travel_time)
+                    else:
+                        attractiveness.append(0)
+                normalize_attractiveness = sum(attractiveness)
+                p_choice = []
+                if normalize_attractiveness != 0:
+                    for i in range(len(attractiveness)):
+                         p_choice.append(attractiveness[i]/normalize_attractiveness)
+                    choice_val = np.random.random()
+                    for i in range(len(p_choice)):
+                        if choice_val < sum(p_choice[0:i+1]):
+                            vehicle.time_on_road = 0
+                            vehicle.position = roads[nodes[vehicle.position][i]]
+                            vehicle.position.cars_on_road += 1
+                            vehicle.time_to_reach_node = vehicle.position.travel_time + np.random.normal(0,2)
+                            break
+
+            #if vehicle has reached the end of the road, move it to a new node (if possible)
+            elif vehicle.time_on_road >= vehicle.time_to_reach_node:
+                if vehicle.position.endnode == 6:
+                    vehicle.position.cars_on_road -= 1
+                    vehicle.position = 6
+                    vehicle.finished = True
+                    continue
+                attractiveness = []            
+                for index in nodes[vehicle.position.endnode]:
+                    if roads[index].cars_on_road < roads[index].capacity:
+                        attractiveness.append(1/roads[index].travel_time)
+                    else:
+                        attractiveness.append(0)
+                normalize_attractiveness = sum(attractiveness)
+                p_choice = []
+                if normalize_attractiveness != 0:
+                    for i in range(len(attractiveness)):
+                         p_choice.append(attractiveness[i]/normalize_attractiveness)
+                    choice_val = np.random.random()
+                    for i in range(len(p_choice)):
+                        if choice_val < sum(p_choice[0:i+1]):
+                            vehicle.position.cars_on_road -= 1
+                            vehicle.time_on_road = 0
+                            vehicle.roads_taken.append(vehicle.position)
+                            vehicle.position = roads[nodes[vehicle.position.endnode][i]]
+                            vehicle.position.cars_on_road += 1
+                            vehicle.time_to_reach_node = vehicle.position.travel_time + np.random.normal(0,2)
+                            break
+
 
 finished = []
 travel_time = []
@@ -102,7 +118,7 @@ for cr in cars:
     travel_time.append([cr.total_time,cr.finished])
     paths.append([cr.roads_taken,cr.total_time])
 avg_times = []
-binsize = 1000
+binsize = 1
 for i in range(int(len(cars)/binsize)):
     total_bin = 0
     if sum(finished[i*binsize:(i+1)*binsize]) == binsize:
@@ -112,8 +128,11 @@ for i in range(int(len(cars)/binsize)):
         avg_times.append(avg_bin)
 
 
-plt.plot(avg_times)
+#plt.plot(avg_times)
 #plt.hist(avg_times,bins=int(max(avg_times)-min(avg_times)),range=(min(avg_times),max(avg_times)))
 
+
 for rd in roads:
+    plt.plot(rd.occupancy)
     print(f"road from {rd.startnode} to {rd.endnode} had average occupancy: {rd.total_cars/(rd.capacity*(t-cutoff_time))}")
+plt.show()
