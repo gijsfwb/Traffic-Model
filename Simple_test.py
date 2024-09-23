@@ -142,24 +142,40 @@ plt.show()
 
 import csv
 cities = [
-    {'Id':1, 'label':'City 1'},
-    {'Id':2, 'label':'City 2'},
-    {'Id':3, 'label':'A'},
-    {'Id':4, 'label':'B'},
-    {'Id':5, 'label':'C'},
-    {'Id':6, 'label':'D'},
-    {'Id':7, 'label':'E'},
+    {'Id':1, 'Label':'City 1'},
+    {'Id':2, 'Label':'City 2'},
+    {'Id':3, 'Label':'A'},
+    {'Id':4, 'Label':'B'},
+    {'Id':5, 'Label':'C'},
+    {'Id':6, 'Label':'D'},
+    {'Id':7, 'Label':'E'},
 ]
 
 def write_cities_csv(filename):
     with open(filename,'w',newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=["Id", "label"])
+        writer = csv.DictWriter(file, fieldnames=["Id", "Label"])
         writer.writeheader()
         writer.writerows(cities)
 
 write_cities_csv('cities.csv')
 
 
+occupancy_list = []
+
+for rd in roads:
+    occupancy_list.append({
+            'Source': rd.startnode,
+            'Target': rd.endnode,
+            'Occupancy': rd.occupancy
+            })
+
+def write_occupancy_list_csv(filename):
+    with open(filename,'w',newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=["Source", "Target", "Occupancy"])
+        writer.writeheader()
+        writer.writerows(occupancy_list)
+
+write_occupancy_list_csv('occupancy_list.csv')
 
 
 
