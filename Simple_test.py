@@ -141,7 +141,6 @@ plt.show()
 
 
 import csv
-
 cities = [
     {'Id':1, 'label':'City 1'},
     {'Id':2, 'label':'City 2'},
@@ -153,10 +152,12 @@ cities = [
 ]
 
 def write_cities_csv(filename):
-    with open(filename, mode='w', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=["Id", "Label"])
+    with open(filename,'w',newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=["Id", "label"])
         writer.writeheader()
         writer.writerows(cities)
+
+write_cities_csv('cities.csv')
 
 
 
