@@ -136,3 +136,29 @@ for rd in roads:
     plt.plot(rd.occupancy)
     print(f"road from {rd.startnode} to {rd.endnode} had average occupancy: {rd.total_cars/(rd.capacity*(t-cutoff_time))}")
 plt.show()
+
+
+
+
+import csv
+
+cities = [
+    {'Id':1, 'label':'City 1'},
+    {'Id':2, 'label':'City 2'},
+    {'Id':3, 'label':'A'},
+    {'Id':4, 'label':'B'},
+    {'Id':5, 'label':'C'},
+    {'Id':6, 'label':'D'},
+    {'Id':7, 'label':'E'},
+]
+
+def write_cities_csv(filename):
+    with open(filename, mode='w', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=["Id", "Label"])
+        writer.writeheader()
+        writer.writerows(cities)
+
+
+
+
+
