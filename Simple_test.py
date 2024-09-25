@@ -52,10 +52,10 @@ while t<480:
         rd.occupancy.append(rd.cars_on_road/rd.capacity)
         if t>cutoff_time:
             rd.total_cars += rd.cars_on_road
+    if t<=cutoff_time:
+        cars_before_cutoff = len(cars)
     for vehicle in cars:
-        if vehicle.finished:
-            continue
-        else:
+        if not vehicle.finished:
             vehicle.total_time += 1
             vehicle.time_on_road += 1
             #move the vehicle from city A to a road (if possible)
@@ -80,7 +80,7 @@ while t<480:
                             vehicle.time_to_reach_node = vehicle.position.travel_time + np.random.normal(0,2)
                             break
 
-            #if vehicle has reached the end of the road, move it to a new node (if possible)
+            #if vehicle has reached the end of the road, move it to a new road (if possible)
             elif vehicle.time_on_road >= vehicle.time_to_reach_node:
                 if vehicle.position.endnode == 6:
                     vehicle.position.cars_on_road -= 1
@@ -119,7 +119,7 @@ for cr in cars:
     paths.append([cr.roads_taken,cr.total_time])
 avg_times = []
 binsize = 1
-for i in range(int(len(cars)/binsize)):
+for i in range(int((cars_before_cutoff-1)/binsize),int(len(cars)/binsize)):
     total_bin = 0
     if sum(finished[i*binsize:(i+1)*binsize]) == binsize:
         for j in range(i*binsize,(i+1)*binsize):            
@@ -127,55 +127,12 @@ for i in range(int(len(cars)/binsize)):
             avg_bin = total_bin/binsize
         avg_times.append(avg_bin)
 
-
 #plt.plot(avg_times)
-#plt.hist(avg_times,bins=int(max(avg_times)-min(avg_times)),range=(min(avg_times),max(avg_times)))
-
+#plt.show()
+plt.hist(avg_times,bins=int(max(avg_times)-min(avg_times)),range=(min(avg_times),max(avg_times)),density=True)
+plt.show()
 
 for rd in roads:
     plt.plot(rd.occupancy)
     print(f"road from {rd.startnode} to {rd.endnode} had average occupancy: {rd.total_cars/(rd.capacity*(t-cutoff_time))}")
 plt.show()
-
-
-
-
-import csv
-cities = [
-    {'Id':1, 'Label':'City 1'},
-    {'Id':2, 'Label':'City 2'},
-    {'Id':3, 'Label':'A'},
-    {'Id':4, 'Label':'B'},
-    {'Id':5, 'Label':'C'},
-    {'Id':6, 'Label':'D'},
-    {'Id':7, 'Label':'E'},
-]
-
-def write_cities_csv(filename):
-    with open(filename,'w',newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=["Id", "Label"])
-        writer.writeheader()
-        writer.writerows(cities)
-
-write_cities_csv('cities.csv')
-
-
-occupancy_list = []
-
-for rd in roads:
-    occupancy_list.append({
-            'Source': rd.startnode,
-            'Target': rd.endnode,
-            'Occupancy': rd.occupancy
-            })
-
-def write_occupancy_list_csv(filename):
-    with open(filename,'w',newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=["Source", "Target", "Occupancy"])
-        writer.writeheader()
-        writer.writerows(occupancy_list)
-
-write_occupancy_list_csv('occupancy_list.csv')
-
-
-
