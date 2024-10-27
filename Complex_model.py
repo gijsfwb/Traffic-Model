@@ -18,15 +18,15 @@ node_names = [
              "Amsterdam",
              "Den haag",
              ]
-nodes = [[0,1,2],[3],[5],[4],[6],[7,8],[9],[10],[]]
+nodes = [[0,1,2],[3],[5],[4],[6],[7,8],[10],[9],[]]
 startnodes = [0,0,0,1,3,2,4,5,5,6,7]
 endnodes = [1,3,6,2,4,7,5,7,6,8,8]
 speeds = [100,100,100,100,100,100,100,100,100,100,100]
-lanes = [2,2,2,2,2,2,2,2,2,2,2]
+lanes = [2,2,2,2,2,2,2,2,2,2,2] #zeer onduidelijk maar 2 lijkt prima te kloppen
 lengths = [100e3,110e3,191e3,29e3,15e3,85e3,23e3,46e3,39e3,36e3,60e3]
 capacity_multipliers = [1,1,1,1,1,1,1,1,1,1,1]
-#for i in range(len(startnodes)):
-#    print(f"van {node_names[startnodes[i]]} naar {node_names[endnodes[i]]} is {lengths[i]}")
+# for i in range(len(startnodes)):
+#     print(f"van {node_names[startnodes[i]]} naar {node_names[endnodes[i]]} is {lengths[i]}")
 roads = []
 cars = []
 roads = []
@@ -72,19 +72,23 @@ class car:
         self.time_on_road = 0
         self.time_to_reach_node = 0
         self.total_time = 0
-        self.roads_taken = []
+        self.roads_taken = [0]
 for i in range(len(startnodes)):
     roads.append(road(startnodes[i],endnodes[i],lengths[i],speeds[i],lanes[i],capacity_multipliers[i]))
 for rd in roads:
     rd.paths = generate_paths(rd.endnode,[])
 startpaths = generate_paths(0,[])
-
+nodepaths = []
+for i in range(len(startpaths)):
+    nodepaths.append([0])
+    for road in startpaths[i]:
+        nodepaths[i].append(roads[road].endnode)
 
 #Timestep loop:
 while t<960:
     t+=1
     print(t)
-    numcars = int(np.random.normal(50,1))
+    numcars = int(np.random.normal(80,1))
     for i in range(numcars):
         cars.append(car(0))
     for rd in roads:
@@ -106,7 +110,7 @@ while t<960:
                 else:
                     paths = vehicle.position.paths
                     if vehicle.position.endnode == 8:
-                        vehicle.roads_taken.append([vehicle.position.startnode,vehicle.position.endnode])
+                        vehicle.roads_taken.append(vehicle.position.endnode)
                         vehicle.position.cars_on_road -= 1
                         vehicle.position = 8
                         vehicle.finished = True
@@ -125,22 +129,22 @@ while t<960:
                         attractiveness.append(1/total_time)
                     else:
                         attractiveness.append(0)
-                    p_choice = []
-                    normalize_attractiveness = sum(attractiveness)
-                    if normalize_attractiveness != 0:
-                        for i in range(len(attractiveness)):
-                            p_choice.append(attractiveness[i]/normalize_attractiveness)
-                        choice_val = np.random.random()
-                        for i in range(len(p_choice)):
-                            if choice_val < sum(p_choice[0:i+1]):
-                                if vehicle.position != 0:
-                                    vehicle.position.cars_on_road -= 1
-                                    vehicle.roads_taken.append([vehicle.position.startnode,vehicle.position.endnode])
-                                vehicle.time_on_road = 0
-                                vehicle.position = roads[paths[i][0]]
-                                vehicle.position.cars_on_road += 1
-                                vehicle.time_to_reach_node = vehicle.position.travel_time + np.random.normal(0,2)
-                                break
+                p_choice = []
+                normalize_attractiveness = sum(attractiveness)
+                if normalize_attractiveness != 0:
+                    for i in range(len(attractiveness)):
+                        p_choice.append(attractiveness[i]/normalize_attractiveness)
+                    choice_val = np.random.random()
+                    for i in range(len(p_choice)):
+                        if choice_val < sum(p_choice[0:i+1]):
+                            if vehicle.position != 0:
+                                vehicle.position.cars_on_road -= 1
+                                vehicle.roads_taken.append(vehicle.position.endnode)
+                            vehicle.time_on_road = 0
+                            vehicle.position = roads[paths[i][0]]
+                            vehicle.position.cars_on_road += 1
+                            vehicle.time_to_reach_node = vehicle.position.travel_time + np.random.normal(0,2)
+                            break
 
 finished = []
 travel_time = []
@@ -148,7 +152,7 @@ paths = []
 for cr in cars:
     finished.append(cr.finished)
     travel_time.append([cr.total_time,cr.finished])
-    paths.append([cr.roads_taken,cr.total_time])
+    paths.append(cr.roads_taken)
 # avg_times = []
 # binsize = 1
 # for i in range(int((cars_before_cutoff-1)/binsize),int(len(cars)/binsize)):
@@ -158,10 +162,17 @@ for cr in cars:
 #             total_bin += cars[j].total_time
 #             avg_bin = total_bin/binsize
 #         avg_times.append(avg_bin)
+    
+
+    
 finish_times = []
-for i in range(cars_before_cutoff-1,len(cars)):
-    if finished[i]:
-        finish_times.append(cars[i].total_time)
+for i in range(len(nodepaths)):
+    finish_times.append([])
+for pathindex in range(len(nodepaths)):   
+    for i in range(cars_before_cutoff-1,len(cars)):
+        if finished[i]:
+            if cars[i].roads_taken == nodepaths[pathindex]:
+                finish_times[pathindex].append(cars[i].total_time)
 for rd in roads:
     plt.plot(rd.occupancy)
     print(f"Road from {node_names[rd.startnode]} to {node_names[rd.endnode]} had average occupancy: {rd.total_cars/(rd.capacity*(t-cutoff_time))}")
@@ -169,5 +180,11 @@ plt.legend(startnodes)
 plt.show()
 #plt.plot(avg_times)
 #plt.show()
-plt.hist(finish_times,bins=int(max(finish_times)-min(finish_times)),range=(min(finish_times),max(finish_times)),density=True)
+timemax = max([max(times) for times in finish_times])
+timemin = min([min(times) for times in finish_times])
+plt.hist(finish_times,bins = int(timemax-timemin),range=(timemin,timemax),density=True,histtype='barstacked',stacked = False)
+path_names = ['Afsluitdijk','Almere-Amsterdam','Almere-Utrecht','Utrecht']
+plt.legend(path_names)
+#for i in range(len(finish_times)):
+#     plt.hist(finish_times[i],bins=int(max(finish_times[i])-min(finish_times[i])),range=(min(finish_times[i]),max(finish_times[i])),density=True,histtype='barstacked',stacked = True)
 plt.show()
