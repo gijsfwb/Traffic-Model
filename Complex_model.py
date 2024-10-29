@@ -88,7 +88,7 @@ for i in range(len(startpaths)):
 while t<960:
     t+=1
     print(t)
-    numcars = int(np.random.normal(80,1))
+    numcars = int(np.random.normal(95,1))
     for i in range(numcars):
         cars.append(car(0))
     for rd in roads:
@@ -119,12 +119,11 @@ while t<960:
                 
                 for path in paths:
                     total_time = 0
+                    if roads[path[0]].cars_on_road >= roads[path[0]].capacity:
+                        total_time = -1
+                        continue
                     for index in path:
-                        if roads[index].cars_on_road < roads[index].capacity:
-                            total_time += roads[index].travel_time
-                        else:
-                            total_time = -1
-                            break
+                        total_time += roads[index].travel_time
                     if total_time != -1:
                         attractiveness.append(1/total_time)
                     else:
